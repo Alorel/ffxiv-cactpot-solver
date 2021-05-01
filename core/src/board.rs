@@ -14,6 +14,10 @@ pub struct Board {
 }
 
 impl Board {
+    pub fn clear_fills(&mut self) {
+        self.fills.clear();
+    }
+
     pub fn len(&self) -> u8 {
         self.fills.len() as u8
     }
@@ -79,6 +83,13 @@ impl Board {
         self.fills
             .iter()
             .find(|p| p.position().eq(col, row))
+            .map(|p| p.as_static())
+    }
+
+    pub fn find_board_pos_static(&self, pos: &'static BoardPosition) -> Option<&'static ValuedBoardPosition> {
+        self.fills
+            .iter()
+            .find(|p| p.position() == pos)
             .map(|p| p.as_static())
     }
 

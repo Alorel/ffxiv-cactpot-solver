@@ -67,6 +67,10 @@ impl BoardPosition {
     pub fn index(&self) -> u8 {
         self.index
     }
+
+    pub fn to_static_self(&self) -> &'static Self {
+        Self::from_index(self.index)
+    }
 }
 
 #[cfg(test)]

@@ -18,5 +18,6 @@ codegen-units = 1
 codegen-units = 1
 
 [dependencies]
-
+eframe = "^0.11.0"
+image = "^0.23.14"
 cactpot_solver_core = { path = "core" }

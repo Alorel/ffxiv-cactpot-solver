@@ -3,8 +3,7 @@ use super::end_board::EndBoardGenerator;
 use super::end_row::DiagRow;
 
 #[derive(Debug)]
-pub struct Recommendation<'b> {
-    board: &'b Board,
+pub struct Recommendation {
     avg_col: [u16; 3],
     avg_row: [u16; 3],
     avg_tl_br: u16,
@@ -24,7 +23,7 @@ fn validate_board(b: &Board) -> Result<(), &'static str> {
     Ok(())
 }
 
-impl<'b> Recommendation<'b> {
+impl Recommendation {
     fn cmp_num(num: u16, max: u16) -> u8 {
         match num == max {
             true => 1,
@@ -93,7 +92,31 @@ impl<'b> Recommendation<'b> {
         }
     }
 
-    pub fn from_board(board: &'b Board) -> Result<Recommendation<'b>, &'static str> {
+    pub fn avg_col(&self) -> &[u16; 3] {
+        &self.avg_col
+    }
+
+    pub fn avg_row(&self) -> &[u16; 3] {
+        &self.avg_row
+    }
+
+    pub fn avg_tl_br(&self) -> u16 {
+        self.avg_tl_br
+    }
+
+    pub fn avg_bl_tr(&self) -> u16 {
+        self.avg_bl_tr
+    }
+
+    pub fn max_avg(&self) -> u16 {
+        self.max_avg
+    }
+
+    pub fn suggestions(&self) -> &Vec<&'static BoardPosition> {
+        &self.suggestions
+    }
+
+    pub fn from_board(board: &Board) -> Result<Recommendation, &'static str> {
         validate_board(&board)?;
 
         let eb = board.available_endings();
@@ -114,10 +137,10 @@ impl<'b> Recommendation<'b> {
         let averages = [c0, c1, c2, r0, r1, r2, avg_tl_br, avg_bl_tr];
 
         let max_avg = Self::calc_max_avg(&averages, u16::MAX).unwrap();
+        // let sugg = Vec::with_capacity(1);
         let suggestions = Self::mk_suggestions(&board, &averages, max_avg);
 
         let out = Recommendation {
-            board,
             avg_col,
             avg_row,
             avg_tl_br,
@@ -128,26 +151,5 @@ impl<'b> Recommendation<'b> {
 
         Ok(out)
     }
-
-    pub fn board(&self) -> &'b Board {
-        &self.board
-    }
-    pub fn avg_col(&self) -> &[u16; 3] {
-        &self.avg_col
-    }
-    pub fn avg_row(&self) -> &[u16; 3] {
-        &self.avg_row
-    }
-    pub fn avg_tl_br(&self) -> u16 {
-        self.avg_tl_br
-    }
-    pub fn avg_bl_tr(&self) -> u16 {
-        self.avg_bl_tr
-    }
-    pub fn max_avg(&self) -> u16 {
-        self.max_avg
-    }
-    pub fn suggestions(&self) -> &Vec<&'static BoardPosition> {
-        &self.suggestions
-    }
 }
+

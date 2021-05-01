@@ -8,28 +8,39 @@ pub struct EndBoard {
     possibilities: Vec<ParsedBoard>,
 }
 
+fn get_payout<T: PartialEq<T> + Copy>(
+    p: &ParsedBoard,
+    row_or_col: T,
+    extract: fn(&EndRow) -> Option<T>,
+) -> Option<u16> {
+    let rowcol_some = Some(row_or_col);
+
+    p.end_rows()
+        .iter()
+        .find(|v| extract(v) == rowcol_some)
+        .map(|v| v.payout_value())
+}
+
 impl EndBoard {
     fn get_avg<T: PartialEq<T> + Copy>(
         &self,
         row_or_col: T,
         extract: fn(&EndRow) -> Option<T>,
     ) -> u16 {
-        let mut total = 0u32;
-        let mut count = 0u32;
+        // let mut total = 0u32;
+        let mut count = 0u16;
 
-        for p in self.possibilities.iter() {
-            let payout = p
-                .end_rows()
-                .iter()
-                .find(|v| extract(v) == Some(row_or_col))
-                .map(|v| v.payout_value() as u32);
-            if let Some(p) = payout {
-                total += p;
+        let total: u32 = self.possibilities
+            .iter()
+            .map(|p| get_payout(p, row_or_col, extract))
+            .filter(|v| v.is_some())
+            .map(|v| v.unwrap() as u32)
+            .inspect(|_| {
                 count += 1;
-            }
-        }
+            })
+            .sum();
 
-        (total / count) as u16
+        (total / (count as u32)) as u16
     }
 
     pub fn avg_for_col(&self, col: u8) -> u16 {
