@@ -1,0 +1,86 @@
+name: Release
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  prepare_windows:
+    name: Prepare (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all --release
+      - name: Zip
+        working-directory: target/release
+        run: powershell "Compress-Archive -CompressionLevel Optimal cactpot_solver.exe cactpot_solver.zip"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: release_windows
+          path: target/release/cactpot_solver.zip
+          retention-days: 1
+          if-no-files-found: error
+  prepare_linux:
+    name: Prepare (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Linux deps
+        run: sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cargo cache (common)
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-common-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all --release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: release_linux
+          path: |
+            launch
+            target/release/cactpot_solver
+          retention-days: 1
+          if-no-files-found: error
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs:
+      - prepare_linux
+      - prepare_windows
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            artifacts/release_linux/cactpot_solver.tar.xz
+            artifacts/release_windows/cactpot_solver.zip
