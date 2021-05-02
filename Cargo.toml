@@ -13,9 +13,11 @@ members = [
 
 [profile.release]
 codegen-units = 1
+incremental = true
 
 [profile.release.build-override]
 codegen-units = 1
+incremental = true
 
 [dependencies]
 eframe = "^0.11.0"

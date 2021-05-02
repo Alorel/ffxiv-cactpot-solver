@@ -1,0 +1,39 @@
+name: Test
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Linux deps
+        run: sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cargo cache
+        uses: actions/cache@v2
+        with:
+          key: v1-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all
+      - name: Pre-caching cleanup
+        working-directory: target/debug
+        run: rm -f cactpot_solver
