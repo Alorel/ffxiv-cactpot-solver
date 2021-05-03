@@ -28,7 +28,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --all --release
+          args: --workspace --release
       - name: Zip
         working-directory: target/release
         run: powershell "Compress-Archive -CompressionLevel Optimal cactpot_solver.exe cactpot-solver-windows.zip"
@@ -67,7 +67,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --all --release
+          args: --workspace --release
       - name: Copy launcher
         run: cp launch target/release/launch
       - name: Archive
