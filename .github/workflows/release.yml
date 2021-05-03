@@ -99,7 +99,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          fail_on_unmatched_files: true
           files: |
             artifacts/release_linux/cactpot-solver-linux.tar.xz
             artifacts/release_windows/cactpot-solver-windows.zip
