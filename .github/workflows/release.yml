@@ -11,14 +11,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Cargo cache
-        uses: actions/cache@v2
-        with:
-          key: v2-${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
-          path: |
-            %userprofile%\.cargo\registry
-            %userprofile%\.cargo\git
-            target\release
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -39,9 +31,6 @@ jobs:
           path: target/release/cactpot-solver-windows.zip
           retention-days: 1
           if-no-files-found: error
-      - name: Pre-caching cleanup
-        working-directory: target/release
-        run: powershell "Remove-Item -Path cactpot_solver.exe" && powershell "Remove-Item -Path cactpot-solver-windows.zip"
   prepare_linux:
     name: Prepare (Linux)
     runs-on: ubuntu-latest
@@ -50,14 +39,6 @@ jobs:
         run: sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libspeechd-dev
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Cargo cache
-        uses: actions/cache@v2
-        with:
-          key: v2-${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target/release
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -80,9 +61,6 @@ jobs:
           path: target/release/cactpot-solver-linux.tar.xz
           retention-days: 1
           if-no-files-found: error
-      - name: Pre-caching cleanup
-        working-directory: target/release
-        run: rm -f cactpot_solver launch cactpot-solver-linux.tar.xz
   release:
     name: Release
     runs-on: ubuntu-latest
