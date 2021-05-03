@@ -1,6 +1,6 @@
 [package]
 name = "cactpot_solver"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Arturas <a.molcanovas@gmail.com>"]
 edition = "2018"
 
@@ -14,6 +14,7 @@ members = [
 [profile.release]
 codegen-units = 1
 incremental = true
+lto = true
 
 [profile.release.build-override]
 codegen-units = 1
