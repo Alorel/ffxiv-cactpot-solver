@@ -23,7 +23,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
+            target/debug
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
