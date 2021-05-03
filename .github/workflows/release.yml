@@ -18,7 +18,7 @@ jobs:
           path: |
             %userprofile%\.cargo\registry
             %userprofile%\.cargo\git
-            target
+            target\release
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -53,11 +53,11 @@ jobs:
       - name: Cargo cache
         uses: actions/cache@v2
         with:
-          key: v1-${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          key: v2-${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
+            target/release
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
