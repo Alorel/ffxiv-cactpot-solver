@@ -10,7 +10,7 @@ const SUGGESTED_COLOUR: Color32 = Color32::from_rgb(2, 125, 232);
 fn resolve_sense(is_enabled: bool) -> Sense {
     match is_enabled {
         true => Sense::click(),
-        false => Sense::hover()
+        false => Sense::hover(),
     }
 }
 
@@ -21,7 +21,7 @@ fn calc_is_enabled(board: &Board, pos: &ValuedBoardPosition) -> bool {
 pub fn draw(
     ui: &mut Ui,
     state: &mut CactpotState,
-    pos: &'static ValuedBoardPosition,
+    pos: ValuedBoardPosition,
     is_suggested: bool,
 ) -> egui::Response {
     let is_enabled = calc_is_enabled(state.board(), &pos);
@@ -35,11 +35,10 @@ pub fn draw(
 
     if rsp.clicked() {
         if let Err(e) = state.board_mut().fill(pos) {
-            eprintln!("Failed to fill: {:?}", e);
+            eprintln!("Failed to fill: {}", e);
         }
         state.update_recommendation();
     }
 
     rsp
 }
-

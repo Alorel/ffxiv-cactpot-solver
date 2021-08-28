@@ -5,9 +5,9 @@ use crate::app::state::CactpotState;
 
 pub(crate) const WINDOW_SIZE: Vec2 = Vec2::new(440.0, 350.0);
 
-pub(crate) mod grid_cell;
-pub(crate) mod grid_btn;
 pub(crate) mod grid;
+pub(crate) mod grid_btn;
+pub(crate) mod grid_cell;
 pub(crate) mod state;
 
 pub struct CactpotSolverGUI {
@@ -19,18 +19,21 @@ impl CactpotSolverGUI {
         let txt = match self.state.board().len() {
             0 => "Select the number the game's chosen for you",
             4 => "Good luck!",
-            _ => "Pick the next number"
+            _ => "Pick the next number",
         };
         ui.add_sized(Vec2::new(WINDOW_SIZE.x, 14.0), Label::new(txt));
     }
 
     fn draw_controls(&mut self, ui: &mut Ui) {
-        ui.with_layout(Layout::centered_and_justified(Direction::LeftToRight), |ui| {
-            if ui.button("Reset").clicked() {
-                self.state.board_mut().clear_fills();
-                self.state.clear_recommendation();
-            }
-        });
+        ui.with_layout(
+            Layout::centered_and_justified(Direction::LeftToRight),
+            |ui| {
+                if ui.button("Reset").clicked() {
+                    self.state.board_mut().clear_fills();
+                    self.state.clear_recommendation();
+                }
+            },
+        );
     }
 }
 

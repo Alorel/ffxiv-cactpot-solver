@@ -1,35 +1,41 @@
 use fill_failure::FillFailure;
 
-use super::{AvailableSelectionIter, BoardPosition, ValuedBoardPosition};
 use super::end_row::EndRow;
+use super::{AvailableSelectionIter, BoardPosition, ValuedBoardPosition};
+use smallvec::SmallVec;
 
 pub mod available_selection_iter;
 pub mod fill_failure;
 
 const BOARD_CAPACITY: u8 = 9;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq)]
 pub struct Board {
-    fills: Vec<&'static ValuedBoardPosition>,
+    fills: SmallVec<[ValuedBoardPosition; 9]>,
 }
 
 impl Board {
+    #[inline]
     pub fn clear_fills(&mut self) {
         self.fills.clear();
     }
 
+    #[inline]
     pub fn len(&self) -> u8 {
         self.fills.len() as u8
     }
 
+    #[inline]
     pub fn remaining_capacity(&self) -> u8 {
         BOARD_CAPACITY - self.len()
     }
 
+    #[inline]
     pub fn is_full(&self) -> bool {
         self.len() == BOARD_CAPACITY
     }
 
+    #[inline]
     pub fn available_selections(&self) -> AvailableSelectionIter {
         AvailableSelectionIter::new(self)
     }
@@ -70,30 +76,31 @@ impl Board {
         self.fills.iter().find(|p| p.value() == v).is_some()
     }
 
-    pub fn contains_position(&self, pos: &BoardPosition) -> bool {
+    pub fn contains_position(&self, pos: BoardPosition) -> bool {
         self.fills.iter().find(|p| p.position() == pos).is_some()
     }
 
-    fn compute_board_pos(&self, col: u8, row: u8) -> &'static ValuedBoardPosition {
+    fn compute_board_pos(&self, col: u8, row: u8) -> ValuedBoardPosition {
         self.find_board_pos(col, row)
             .unwrap_or_else(|| ValuedBoardPosition::empty(BoardPosition::new(col, row)))
     }
 
-    fn find_board_pos(&self, col: u8, row: u8) -> Option<&'static ValuedBoardPosition> {
-        self.fills
-            .iter()
-            .find(|p| p.position().eq(col, row))
-            .map(|p| p.as_static())
+    #[inline]
+    pub fn find(&self, pos: BoardPosition) -> Option<ValuedBoardPosition> {
+        self.find_board_pos(pos.col(), pos.row())
     }
 
-    pub fn find_board_pos_static(&self, pos: &'static BoardPosition) -> Option<&'static ValuedBoardPosition> {
-        self.fills
-            .iter()
-            .find(|p| p.position() == pos)
-            .map(|p| p.as_static())
+    fn find_board_pos(&self, col: u8, row: u8) -> Option<ValuedBoardPosition> {
+        self.fills.iter().find_map(|p| {
+            if p.position().eq(col, row) {
+                Some(p.to_owned())
+            } else {
+                None
+            }
+        })
     }
 
-    pub fn fill(&mut self, pos: &'static ValuedBoardPosition) -> Result<(), FillFailure> {
+    pub fn fill(&mut self, pos: ValuedBoardPosition) -> Result<(), FillFailure> {
         if self.contains_value(pos.value()) {
             return Err(FillFailure::ValueAlreadyContained);
         } else if self.contains_position(pos.position()) {
@@ -109,7 +116,7 @@ impl Board {
 impl Default for Board {
     fn default() -> Self {
         Self {
-            fills: Vec::with_capacity(BOARD_CAPACITY as usize),
+            fills: SmallVec::with_capacity(BOARD_CAPACITY as usize),
         }
     }
 }

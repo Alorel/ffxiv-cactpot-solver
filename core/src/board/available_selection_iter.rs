@@ -14,23 +14,18 @@ impl<'b> Iterator for AvailableSelectionIter<'b> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.has_emitted_everything() {
-            return None;
-        }
-
-        let counter: u8 = self.counter;
-        if counter == LIMIT {
+        let counter = self.counter;
+        if counter == LIMIT || self.has_emitted_everything() {
             return None;
         }
 
         self.counter += 1;
 
-        match self.board.contains_value(counter) {
-            true => self.next(),
-            false => {
-                self.num_emitted += 1;
-                Some(counter)
-            }
+        if self.board.contains_value(counter) {
+            self.next()
+        } else {
+            self.num_emitted += 1;
+            Some(counter)
         }
     }
 

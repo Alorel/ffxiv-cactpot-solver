@@ -10,66 +10,94 @@ pub const MAX_IDX: u8 = 8;
 pub const MAX_POS: u8 = 2;
 
 /// A position on the board
-#[derive(Eq, Debug)]
+#[derive(Eq, Debug, Copy, Clone, Default)]
 pub struct BoardPosition {
     col: u8,
     row: u8,
     index: u8,
 }
 
-impl PartialEq<BoardPosition> for BoardPosition {
+impl PartialEq for BoardPosition {
+    #[inline]
     fn eq(&self, other: &BoardPosition) -> bool {
         self.index == other.index
     }
 }
 
+impl Display for BoardPosition {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        Display::fmt(&self.col, f)?;
+        f.write_str(", ")?;
+        Display::fmt(&self.row, f)
+    }
+}
+
 impl BoardPosition {
-    pub fn default() -> &'static Self {
-        &P0
-    }
-
-    pub fn never() -> &'static Self {
-        &NEVER
-    }
-
-    pub fn new(col: u8, row: u8) -> &'static Self {
-        if col > MAX_POS || row > MAX_POS {
-            panic!("Invalid col+row: {}, {}", col, row);
+    #[inline]
+    pub fn never() -> Self {
+        Self {
+            col: u8::MAX,
+            row: u8::MAX,
+            index: u8::MAX,
         }
-
-        &LOOKUP_BY_POS[col as usize][row as usize]
     }
 
-    pub fn diag_row(&self) -> &'static DiagRow {
-        &LOOKUP_DIAG_ROW[self.col as usize][self.row as usize]
-    }
+    #[inline]
+    pub fn new(col: u8, row: u8) -> Self {
+        debug_assert!(
+            col <= MAX_POS && row <= MAX_POS,
+            "Invalid col+row {}, {}",
+            col,
+            row
+        );
 
-    pub fn from_index(idx: u8) -> &'static Self {
-        if idx > MAX_IDX {
-            panic!("Index out of bounds: {}", idx);
+        Self {
+            col,
+            row,
+            index: Self::pos_index(col, row),
         }
-
-        &LOOKUP_BY_IDX[idx as usize]
     }
 
+    #[inline]
+    fn pos_index(col: u8, row: u8) -> u8 {
+        col + (row * 3)
+    }
+
+    #[inline]
+    pub fn diag_row(&self) -> DiagRow {
+        LOOKUP_DIAG_ROW[self.col as usize][self.row as usize]
+    }
+
+    pub fn from_index(index: u8) -> Self {
+        debug_assert!(index <= MAX_IDX, "Index out of bounds: {}", index);
+
+        let col = index % 3;
+
+        Self {
+            col,
+            row: (index - col) / 3,
+            index,
+        }
+    }
+
+    #[inline]
     pub fn eq(&self, col: u8, row: u8) -> bool {
         col == self.col && row == self.row
     }
 
+    #[inline]
     pub fn col(&self) -> u8 {
         self.col
     }
 
+    #[inline]
     pub fn row(&self) -> u8 {
         self.row
     }
 
+    #[inline]
     pub fn index(&self) -> u8 {
         self.index
-    }
-
-    pub fn to_static_self(&self) -> &'static Self {
-        Self::from_index(self.index)
     }
 }
 
@@ -86,7 +114,7 @@ mod test {
     fn never() {
         assert_eq!(
             BoardPosition::never(),
-            &BoardPosition {
+            BoardPosition {
                 col: u8::MAX,
                 row: u8::MAX,
                 index: u8::MAX,
@@ -109,15 +137,15 @@ mod test {
     #[test]
     fn diag_row() {
         let specs = [
-            &DiagRow::TopLeftBottomRight,
-            &DiagRow::None,
-            &DiagRow::BottomLeftTopRight,
-            &DiagRow::None,
-            &DiagRow::Both,
-            &DiagRow::None,
-            &DiagRow::BottomLeftTopRight,
-            &DiagRow::None,
-            &DiagRow::TopLeftBottomRight,
+            DiagRow::TopLeftBottomRight,
+            DiagRow::None,
+            DiagRow::BottomLeftTopRight,
+            DiagRow::None,
+            DiagRow::Both,
+            DiagRow::None,
+            DiagRow::BottomLeftTopRight,
+            DiagRow::None,
+            DiagRow::TopLeftBottomRight,
         ];
         for i in 0..specs.len() {
             let pos = BoardPosition::from_index(i as u8);
@@ -163,74 +191,12 @@ mod test {
 }
 
 pub mod singletons {
-    use super::BoardPosition as BP;
+
     use super::DiagRow::{self, *};
-
-    pub const LOOKUP_BY_POS: [[&'static BP; 3]; 3] =
-        [[&P0, &P3, &P6], [&P1, &P4, &P7], [&P2, &P5, &P8]];
-
-    pub const LOOKUP_BY_IDX: [&'static BP; 9] = [&P0, &P1, &P2, &P3, &P4, &P5, &P6, &P7, &P8];
 
     pub const LOOKUP_DIAG_ROW: [[DiagRow; 3]; 3] = [
         [TopLeftBottomRight, None, BottomLeftTopRight],
         [None, Both, None],
         [BottomLeftTopRight, None, TopLeftBottomRight],
     ];
-
-    pub const P0: BP = BP {
-        col: 0,
-        row: 0,
-        index: 0,
-    };
-    pub const P1: BP = BP {
-        col: 1,
-        row: 0,
-        index: 1,
-    };
-    pub const P2: BP = BP {
-        col: 2,
-        row: 0,
-        index: 2,
-    };
-    pub const P3: BP = BP {
-        col: 0,
-        row: 1,
-        index: 3,
-    };
-    pub const P4: BP = BP {
-        col: 1,
-        row: 1,
-        index: 4,
-    };
-    pub const P5: BP = BP {
-        col: 2,
-        row: 1,
-        index: 5,
-    };
-    pub const P6: BP = BP {
-        col: 0,
-        row: 2,
-        index: 6,
-    };
-    pub const P7: BP = BP {
-        col: 1,
-        row: 2,
-        index: 7,
-    };
-    pub const P8: BP = BP {
-        col: 2,
-        row: 2,
-        index: 8,
-    };
-    pub const NEVER: BP = BP {
-        col: u8::MAX,
-        row: u8::MAX,
-        index: u8::MAX,
-    };
-}
-
-impl Display for BoardPosition {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{}, {}", self.col, self.row)
-    }
 }

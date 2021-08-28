@@ -12,37 +12,42 @@ mod print_tip {
 
     use cactpot_solver_core::Recommendation;
 
-    use super::{Align, CactpotState, Direction, grid_cell, Layout, Sense, Ui, Vec2};
+    use super::{grid_cell, Align, CactpotState, Direction, Layout, Sense, Ui, Vec2};
 
     const TIP_SIZE_ROW: Vec2 = Vec2::new(50.0, grid_cell::SIZE.y);
     pub const TIP_SIZE_COL: Vec2 = Vec2::new(grid_cell::SIZE.x, 14.0);
     const SUGGESTION_COLOUR: Color32 = Color32::from_rgb(153, 152, 151);
     const SUGGESTION_BEST_COLOUR: Color32 = Color32::from_rgb(9, 209, 2);
 
+    #[inline]
     fn resolve_colour<T: PartialEq<T>>(tested_value: T, avg_value: T) -> Color32 {
-        match avg_value == tested_value {
-            true => SUGGESTION_BEST_COLOUR,
-            false => SUGGESTION_COLOUR
+        if avg_value == tested_value {
+            SUGGESTION_BEST_COLOUR
+        } else {
+            SUGGESTION_COLOUR
         }
     }
 
     pub fn row(ui: &mut Ui, row: usize, state: &CactpotState) {
-        let (rect, _res) = ui.allocate_exact_size(TIP_SIZE_ROW, Sense::hover());
+        let (rect, _) = ui.allocate_exact_size(TIP_SIZE_ROW, Sense::hover());
 
         ui.allocate_ui_at_rect(rect, |ui| {
             if let Some(recommendation) = state.recommendation() {
-                let avg = recommendation.avg_row()[row];
-                let lbl = Label::new(format!("{}", avg))
-                    .text_color(resolve_colour(avg, recommendation.max_avg()));
+                let lbl = {
+                    let avg = recommendation.avg_row()[row];
+                    Label::new(avg.to_string())
+                        .text_color(resolve_colour(avg, recommendation.max_avg()))
+                };
                 ui.add(lbl);
             }
         });
     }
 
     pub fn col(ui: &mut Ui, col: usize, recommendation: &Recommendation) {
-        let avg = recommendation.avg_col()[col];
-        let lbl = Label::new(format!("{}", avg))
-            .text_color(resolve_colour(avg, recommendation.max_avg()));
+        let lbl = {
+            let avg = recommendation.avg_col()[col];
+            Label::new(avg.to_string()).text_color(resolve_colour(avg, recommendation.max_avg()))
+        };
         ui.add_sized(TIP_SIZE_COL, lbl);
     }
 
@@ -59,8 +64,7 @@ fn draw_main(ui: &mut Ui, state: &mut CactpotState) {
         ui.horizontal(|ui| {
             ui.allocate_exact_size(print_tip::TIP_SIZE_COL, Sense::hover());
             for col in 0u8..3 {
-                let pos = BoardPosition::new(col, row);
-                grid_cell::draw(ui, state, pos);
+                grid_cell::draw(ui, state, BoardPosition::new(col, row));
             }
             print_tip::row(ui, row as usize, state);
         });
@@ -73,11 +77,21 @@ fn draw_bottom(ui: &mut Ui, state: &CactpotState) {
 
         match state.recommendation() {
             Some(recommendation) => {
-                print_tip::diag(ui, recommendation.avg_bl_tr(), recommendation.max_avg(), Direction::RightToLeft);
+                print_tip::diag(
+                    ui,
+                    recommendation.avg_bl_tr(),
+                    recommendation.max_avg(),
+                    Direction::RightToLeft,
+                );
                 for col in 0..3 {
                     print_tip::col(ui, col, recommendation);
                 }
-                print_tip::diag(ui, recommendation.avg_tl_br(), recommendation.max_avg(), Direction::LeftToRight);
+                print_tip::diag(
+                    ui,
+                    recommendation.avg_tl_br(),
+                    recommendation.max_avg(),
+                    Direction::LeftToRight,
+                );
             }
             None => {
                 ui.add_sized(print_tip::TIP_SIZE_COL, Label::new(""));
@@ -91,5 +105,6 @@ pub fn draw(ui: &mut Ui, state: &mut CactpotState) -> egui::Response {
         ui.spacing_mut().item_spacing = SPACING;
         draw_main(ui, state);
         draw_bottom(ui, state);
-    }).response
+    })
+    .response
 }

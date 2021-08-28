@@ -1,6 +1,6 @@
-use super::{Board, BoardPosition};
 use super::end_board::EndBoardGenerator;
 use super::end_row::DiagRow;
+use super::{Board, BoardPosition};
 
 #[derive(Debug)]
 pub struct Recommendation {
@@ -9,7 +9,7 @@ pub struct Recommendation {
     avg_tl_br: u16,
     avg_bl_tr: u16,
     max_avg: u16,
-    suggestions: Vec<&'static BoardPosition>,
+    suggestions: Vec<BoardPosition>,
 }
 
 fn validate_board(b: &Board) -> Result<(), &'static str> {
@@ -41,11 +41,7 @@ impl Recommendation {
         max_avg.map(|v| *v)
     }
 
-    fn mk_suggestions(
-        board: &Board,
-        averages: &[u16; 8],
-        curr_max_avg: u16,
-    ) -> Vec<&'static BoardPosition> {
+    fn mk_suggestions(board: &Board, averages: &[u16; 8], curr_max_avg: u16) -> Vec<BoardPosition> {
         let mut suggestions = Vec::with_capacity(1);
         let mut curr_max_matches = 0u8;
 
@@ -55,14 +51,14 @@ impl Recommendation {
 
             for row in 0..3 {
                 let pos = BoardPosition::new(col as u8, row as u8);
-                if board.contains_position(&pos) {
+                if board.contains_position(pos) {
                     continue;
                 }
 
                 // 1 = true, 0 = false
                 let matches_row = Self::cmp_num(averages[row + 3], curr_max_avg);
 
-                let diag_plus: u8 = match pos.diag_row() {
+                let diag_plus = match pos.diag_row() {
                     DiagRow::Both => {
                         Self::cmp_num(averages[6], curr_max_avg)
                             + Self::cmp_num(averages[7], curr_max_avg)
@@ -83,36 +79,43 @@ impl Recommendation {
             }
         }
 
-        match suggestions.is_empty() {
-            true => match Self::calc_max_avg(&averages, curr_max_avg) {
-                Some(next_max_avg) => Self::mk_suggestions(&board, &averages, next_max_avg),
-                None => vec![],
-            },
-            false => suggestions,
+        if suggestions.is_empty() {
+            if let Some(next) = Self::calc_max_avg(&averages, curr_max_avg) {
+                return Self::mk_suggestions(&board, &averages, next);
+            }
         }
+
+        suggestions.shrink_to_fit();
+        suggestions
     }
 
+    #[inline]
     pub fn avg_col(&self) -> &[u16; 3] {
         &self.avg_col
     }
 
+    #[inline]
     pub fn avg_row(&self) -> &[u16; 3] {
         &self.avg_row
     }
 
+    #[inline]
     pub fn avg_tl_br(&self) -> u16 {
         self.avg_tl_br
     }
 
+    #[inline]
     pub fn avg_bl_tr(&self) -> u16 {
         self.avg_bl_tr
     }
 
+    #[inline]
     pub fn max_avg(&self) -> u16 {
         self.max_avg
     }
 
-    pub fn suggestions(&self) -> &Vec<&'static BoardPosition> {
+    #[inline]
+    pub fn suggestions(&self) -> &Vec<BoardPosition> {
         &self.suggestions
     }
 
@@ -137,7 +140,6 @@ impl Recommendation {
         let averages = [c0, c1, c2, r0, r1, r2, avg_tl_br, avg_bl_tr];
 
         let max_avg = Self::calc_max_avg(&averages, u16::MAX).unwrap();
-        // let sugg = Vec::with_capacity(1);
         let suggestions = Self::mk_suggestions(&board, &averages, max_avg);
 
         let out = Recommendation {
@@ -152,4 +154,3 @@ impl Recommendation {
         Ok(out)
     }
 }
-

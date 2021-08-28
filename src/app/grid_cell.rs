@@ -9,32 +9,25 @@ use super::grid_btn;
 pub const SIZE: Vec2 = Vec2::new(79.0, 79.0);
 const SPACING: Vec2 = Vec2::new(2.0, 2.0);
 
-macro_rules! std_layout {
-    () => { Layout::centered_and_justified(Direction::LeftToRight) }
+fn draw_filled(target_ui: &mut Ui, board: &Board, pos: BoardPosition) -> egui::Response {
+    target_ui
+        .allocate_ui_with_layout(
+            SIZE,
+            Layout::centered_and_justified(Direction::LeftToRight),
+            |ui| {
+                if let Some(v) = board.find(pos) {
+                    ui.heading(v.value().to_string());
+                }
+            },
+        )
+        .response
 }
 
-fn draw_filled(
-    ui: &mut Ui,
-    board: &Board,
-    pos: &'static BoardPosition,
-) -> egui::Response {
-    ui.allocate_ui_with_layout(SIZE, std_layout!(), |ui| {
-        if let Some(v) = board.find_board_pos_static(pos) {
-            ui.heading(v.value().to_string());
-        }
-    }).response
-}
-
-fn draw_unfilled(
-    ui: &mut Ui,
-    state: &mut CactpotState,
-    cell_pos: &'static BoardPosition,
-) -> egui::Response {
-    let is_suggested = state
-        .recommendation()
-        .as_ref()
-        .map(|r| r.suggestions().contains(&cell_pos))
-        .unwrap_or(false);
+fn draw_unfilled(ui: &mut Ui, state: &mut CactpotState, cell_pos: BoardPosition) -> egui::Response {
+    let is_suggested = match state.recommendation() {
+        Some(v) => v.suggestions().contains(&cell_pos),
+        None => false,
+    };
 
     ui.allocate_ui(SIZE, |ui| {
         ui.vertical(|ui| {
@@ -53,16 +46,14 @@ fn draw_unfilled(
                 });
             }
         });
-    }).response
+    })
+    .response
 }
 
-pub fn draw<'b>(
-    ui: &mut Ui,
-    state: &mut CactpotState,
-    cell_pos: &'static BoardPosition,
-) -> egui::Response {
-    match state.board().contains_position(cell_pos) {
-        true => draw_filled(ui, state.board(), &cell_pos),
-        false => draw_unfilled(ui, state, cell_pos)
+pub fn draw(ui: &mut Ui, state: &mut CactpotState, cell_pos: BoardPosition) -> egui::Response {
+    if state.board().contains_position(cell_pos) {
+        draw_filled(ui, state.board(), cell_pos)
+    } else {
+        draw_unfilled(ui, state, cell_pos)
     }
 }

@@ -1,18 +1,18 @@
-use super::{Board, BoardPosition, ValuedBoardPosition};
 use super::end_row::{DiagRow, EndRow};
 use super::parsed_board::ParsedBoard;
+use super::{Board, BoardPosition, ValuedBoardPosition};
 
 /// Possible endings for the current board
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EndBoard {
     possibilities: Vec<ParsedBoard>,
 }
 
-fn get_payout<T: PartialEq<T> + Copy>(
-    p: &ParsedBoard,
-    row_or_col: T,
-    extract: fn(&EndRow) -> Option<T>,
-) -> Option<u16> {
+fn get_payout<T, F>(p: &ParsedBoard, row_or_col: T, mut extract: F) -> Option<u16>
+where
+    F: FnMut(&EndRow) -> Option<T>,
+    T: PartialEq,
+{
     let rowcol_some = Some(row_or_col);
 
     p.end_rows()
@@ -22,21 +22,21 @@ fn get_payout<T: PartialEq<T> + Copy>(
 }
 
 impl EndBoard {
-    fn get_avg<T: PartialEq<T> + Copy>(
-        &self,
-        row_or_col: T,
-        extract: fn(&EndRow) -> Option<T>,
-    ) -> u16 {
+    fn get_avg<T, F>(&self, row_or_col: T, extract: F) -> u16
+    where
+        T: PartialEq + Copy,
+        F: FnMut(&EndRow) -> Option<T> + Copy,
+    {
         // let mut total = 0u32;
         let mut count = 0u16;
 
-        let total: u32 = self.possibilities
+        let total: u32 = self
+            .possibilities
             .iter()
-            .map(|p| get_payout(p, row_or_col, extract))
-            .filter(|v| v.is_some())
-            .map(|v| v.unwrap() as u32)
-            .inspect(|_| {
+            .filter_map(|p| get_payout(p, row_or_col, extract))
+            .map(|v| {
                 count += 1;
+                v as u32
             })
             .sum();
 
@@ -97,7 +97,7 @@ impl<'p> BoardIterator<'p> {
     fn iterate_internal(board: Board, column_idx: u8, coll: &mut Vec<ParsedBoard>) {
         let position = BoardPosition::from_index(column_idx);
         let next_idx = column_idx + 1;
-        if board.contains_position(&position) {
+        if board.contains_position(position) {
             return Self::iterate_internal(board, next_idx, coll);
         }
 

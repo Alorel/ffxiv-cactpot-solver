@@ -1,18 +1,18 @@
 use std::cmp::Ordering;
 
-use super::Board;
 use super::end_row::EndRow;
+use super::Board;
 
 pub type Rows = [EndRow; 8];
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ParsedBoardPayouts {
     avg: u16,
     max: u16,
     min: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq)]
 pub struct ParsedBoard {
     payouts_board: ParsedBoardPayouts,
     payouts_row: [u16; 3],
@@ -21,6 +21,29 @@ pub struct ParsedBoard {
     payout_tl_br: u16,
     end_rows: Rows,
     board: Board,
+}
+
+impl PartialEq for ParsedBoard {
+    #[inline]
+    fn eq(&self, other: &ParsedBoard) -> bool {
+        self.end_rows == other.end_rows && self.board == other.board
+    }
+}
+
+impl PartialOrd for ParsedBoard {
+    #[inline]
+    fn partial_cmp(&self, other: &ParsedBoard) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for ParsedBoard {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.payouts_board.avg.cmp(&other.payouts_board.avg) {
+            Ordering::Equal => self.payouts_board.max.cmp(&other.payouts_board.max),
+            o => o,
+        }
+    }
 }
 
 impl ParsedBoard {
@@ -79,28 +102,5 @@ impl ParsedBoard {
 
     pub fn end_rows(&self) -> &Rows {
         &self.end_rows
-    }
-}
-
-impl PartialEq<ParsedBoard> for ParsedBoard {
-    fn eq(&self, other: &ParsedBoard) -> bool {
-        self.end_rows == other.end_rows && self.board == other.board
-    }
-}
-
-impl Eq for ParsedBoard {}
-
-impl PartialOrd<ParsedBoard> for ParsedBoard {
-    fn partial_cmp(&self, other: &ParsedBoard) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for ParsedBoard {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.payouts_board
-            .avg
-            .partial_cmp(&other.payouts_board.avg)
-            .unwrap_or_else(|| self.payouts_board.max.cmp(&other.payouts_board.max))
     }
 }

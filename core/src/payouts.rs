@@ -3,10 +3,12 @@ const PAYOUTS_ARRAY: [u16; 25] = [
     1080, 144, 1800, 3600,
 ];
 
+#[inline]
 pub fn payout_for_points(points: u8) -> u16 {
-    match points > 24 {
-        true => 0,
-        false => PAYOUTS_ARRAY[points as usize]
+    if points > 24 {
+        0
+    } else {
+        PAYOUTS_ARRAY[points as usize]
     }
 }
 
